@@ -14,4 +14,4 @@
 # vim
 *.sw[op]
 vendor/
-./build/backup
+build/
