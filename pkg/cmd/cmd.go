@@ -6,10 +6,11 @@ import (
 	"fmt"
 )
 
-const APP_VERSION = "0.1.0"
+// AppVersion indicated application version
+const AppVersion = "0.1.0"
 
-var Username string
-var Password string
+var username string
+var password string
 
 // NewCommand creates cobra command
 func NewCommand() *cobra.Command {
@@ -17,14 +18,14 @@ func NewCommand() *cobra.Command {
 		Use:     "backup",
 		Short:   "bitbucket-backup is a cli tool to dump repos from bitbucket",
 		Long:    `bitbucket-backup is a cli tool to dump repos from bitbucket`,
-		Version: APP_VERSION,
+		Version: AppVersion,
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Printf("Flags here: %+v %+v", Username, Password)
+			fmt.Printf("Flags here: %+v %+v", username, password)
 		},
 	}
 
-	cmd.PersistentFlags().StringVarP(&Username, "username", "u", "", "Bitbucket username")
-	cmd.PersistentFlags().StringVarP(&Password, "password", "p", "", "Bitbucket password")
+	cmd.PersistentFlags().StringVarP(&username, "username", "u", "", "Bitbucket username")
+	cmd.PersistentFlags().StringVarP(&password, "password", "p", "", "Bitbucket password")
 
 	return cmd
 }

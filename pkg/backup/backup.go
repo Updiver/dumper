@@ -2,10 +2,23 @@ package backup
 
 import (
 	"fmt"
-	// "gopkg.in/src-d/go-git.v4"
+
+	git "gopkg.in/src-d/go-git.v4"
+	plumbing "gopkg.in/src-d/go-git.v4/plumbing"
 )
 
-// TODO: bitbucket backup code here
-func Some() {
-	fmt.Println("Some func inside backup for now")
+// Another does something
+func Another(url, directory string, branches []string) {
+	fmt.Println("Cloning repo: %s to folder: %s", url, directory)
+
+	for _, branchName := range branches {
+		git.PlainClone(directory, false, &git.CloneOptions{
+			URL:               url,
+			RecurseSubmodules: git.DefaultSubmoduleRecursionDepth,
+			SingleBranch:      false,
+			ReferenceName:     plumbing.NewBranchReferenceName(branchName),
+			// ReferenceName: branchName,
+		})
+	}
+
 }
