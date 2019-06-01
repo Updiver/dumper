@@ -3,22 +3,42 @@ package backup
 import (
 	"fmt"
 
+	"log"
+
+	"os"
+	"os/user"
+
 	git "gopkg.in/src-d/go-git.v4"
-	plumbing "gopkg.in/src-d/go-git.v4/plumbing"
 )
 
-// Another does something
-func Another(url, directory string, branches []string) {
-	fmt.Println("Cloning repo: %s to folder: %s", url, directory)
+// Clone does something
+func Clone(url, directory string /* branches []string */) {
+	fmt.Printf("Cloning repo: %s to folder: %s\n", url, directory)
+	systemUser, err := user.Current()
+	if err != nil {
+		log.Fatalf("Failed getting current system user: %s", err)
+		return
+	}
 
-	for _, branchName := range branches {
-		git.PlainClone(directory, false, &git.CloneOptions{
-			URL:               url,
-			RecurseSubmodules: git.DefaultSubmoduleRecursionDepth,
-			SingleBranch:      false,
-			ReferenceName:     plumbing.NewBranchReferenceName(branchName),
-			// ReferenceName: branchName,
-		})
+	fullDirectoryPath := systemUser.HomeDir + "/cloned_repositories/" + directory
+
+	fmt.Printf("Repo will be cloned here: %s\n", fullDirectoryPath)
+
+	// TODO: implement fetching branches
+	// TODO: implement letting user know which repos are > 1Gb
+	// and leave links for them to do that manually
+	_, err = git.PlainClone(fullDirectoryPath, false, &git.CloneOptions{
+		URL:               url,
+		RecurseSubmodules: git.DefaultSubmoduleRecursionDepth,
+		SingleBranch:      false,
+		Progress:          os.Stderr,
+		// ReferenceName:     plumbing.NewBranchReferenceName(branchName),
+	})
+
+	if err != nil {
+		fmt.Printf("Failed pulling repository: %s\n", err)
+	} else {
+		fmt.Println("Repo cloned OK")
 	}
 
 }

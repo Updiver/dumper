@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"log"
 
-	// "bitbucket-backup/pkg/backup"
-
+	"bitbucket-backup/pkg/backup"
 	"net/http"
-
 	"time"
+
+	"strconv"
 
 	"github.com/spf13/cobra"
 )
@@ -36,6 +36,8 @@ type Repository struct {
 	Name string `json:"name"`
 	// Repository name with username
 	FullName string `json:"full_name"`
+	// Size in bytes
+	Size string `json:"size"`
 }
 
 // TeamWrapper describes teams linked to current bitbucket user
@@ -70,10 +72,19 @@ func NewCommand() *cobra.Command {
 
 			fmt.Println("Finished pulling list of repositories")
 
-			repos := repos(Creds{username, password})
-			fmt.Println(repos)
+			repos, tooLargeRepos := repos(Creds{username, password})
+			for _, repoName := range repos {
+				urlWithCreds := "https://" + username + ":" + password + "@bitbucket.org/" + repoName
+				// FIXME: make sure we have no identical folder names
+				// directory := strings.Split(repoName, "/")[1] // take repository name
+				backup.Clone(urlWithCreds, repoName)
+			}
 
-			// backup.Clone()
+			fmt.Println("=== COULDN'T CLONE THESE REPOS BECAUSE OF THEIR LARGE SIZE ===")
+			fmt.Println("=== Please clone those repos manually or clean them to have size under 500MB ===")
+			for _, rName := range tooLargeRepos {
+				fmt.Println(rName)
+			}
 		},
 	}
 }
@@ -90,7 +101,7 @@ func teams(creds Creds) []string {
 
 		request, err := http.NewRequest("GET", url, nil)
 		if err != nil {
-			log.Fatalf("Failed sending GET request to Bitbucket: %s", err)
+			log.Fatalf("Failed sending GET request to Bitbucket: %s\n", err)
 		}
 
 		request.Header.Add("Content-Type", "application/json")
@@ -98,19 +109,18 @@ func teams(creds Creds) []string {
 
 		response, err := client.Do(request)
 		if err != nil {
-			log.Fatalf("Failed making request: %s", err)
+			log.Fatalf("Failed making request: %s\n", err)
 			return []string{}
 		}
 		defer response.Body.Close()
 
 		err = json.NewDecoder(response.Body).Decode(&teams)
 
-		fmt.Printf("Teams: %+v", teams)
 		for _, team := range teams.Teams {
 			teamNames = append(teamNames, team.TeamName)
 		}
 
-		time.Sleep(2 * time.Second)
+		time.Sleep(1 * time.Second)
 
 		if len(teams.Teams) == 0 {
 			break
@@ -122,9 +132,10 @@ func teams(creds Creds) []string {
 }
 
 // repos returns list of repositories of current bitbucket user
-func repos(creds Creds) []string {
+func repos(creds Creds) ([]string, []string) {
 	var repositories RepositoryWrapper
 	var respositoryNames []string
+	var tooLargeRepositories []string
 	client := &http.Client{}
 
 	for _, teamName := range teams(creds) {
@@ -136,7 +147,7 @@ func repos(creds Creds) []string {
 
 			request, err := http.NewRequest("GET", url, nil)
 			if err != nil {
-				log.Fatalf("Failed sending GET request to Bitbucket: %s", err)
+				log.Fatalf("Failed sending GET request to Bitbucket: %s\n", err)
 			}
 
 			request.Header.Add("Content-Type", "application/json")
@@ -144,17 +155,24 @@ func repos(creds Creds) []string {
 
 			response, err := client.Do(request)
 			if err != nil {
-				log.Fatalf("Failed making request: %s", err)
-				return []string{}
+				log.Fatalf("Failed making request: %s\n", err)
+				return []string{}, []string{}
 			}
 			defer response.Body.Close()
 
 			err = json.NewDecoder(response.Body).Decode(&repositories)
 
-			fmt.Printf("Repositories: %+v", repositories)
 			for _, repo := range repositories.Repositories {
-				// FullName is a teamname or username + repo name
-				respositoryNames = append(respositoryNames, repo.FullName)
+
+				// checking if size is not too big
+				// becuase system won't be able to hanle 500MB+
+				size, _ := strconv.Atoi(repo.Size)
+				if (size / (1024 * 1024)) < 500 {
+					// FullName is a teamname or username + repo name
+					respositoryNames = append(respositoryNames, repo.FullName)
+				} else {
+					tooLargeRepositories = append(tooLargeRepositories, repo.FullName)
+				}
 			}
 
 			time.Sleep(2 * time.Second)
@@ -165,5 +183,5 @@ func repos(creds Creds) []string {
 		}
 	}
 
-	return respositoryNames
+	return respositoryNames, tooLargeRepositories
 }

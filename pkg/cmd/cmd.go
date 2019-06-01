@@ -11,6 +11,7 @@ const AppVersion = "0.1.0"
 
 var username string
 var password string
+var interval string
 
 // NewCommand creates cobra command
 func NewCommand() *cobra.Command {
@@ -26,6 +27,7 @@ func NewCommand() *cobra.Command {
 
 	cmd.PersistentFlags().StringVarP(&username, "username", "u", "", "Bitbucket username")
 	cmd.PersistentFlags().StringVarP(&password, "password", "p", "", "Bitbucket password")
+	cmd.PersistentFlags().StringVarP(&interval, "interval", "i", "", "Interval. How frequently make requests (in seconds)")
 
 	return cmd
 }
