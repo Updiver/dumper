@@ -13,3 +13,5 @@
 
 # vim
 *.sw[op]
+vendor/
+./build/*
