@@ -9,11 +9,13 @@ import (
 
 	"net/http"
 
+	"time"
+
 	"github.com/spf13/cobra"
 )
 
 // BitbucketRepositoriesAPI points to api with list of repositories
-const BitbucketRepositoriesAPI = "https://api.bitbucket.org/2.0/repositories/%s"
+const BitbucketRepositoriesAPI = "https://api.bitbucket.org/2.0/repositories/%v?page=%v"
 
 // RepositoryWrapper Contains meta information about repository object
 type RepositoryWrapper struct {
@@ -23,8 +25,6 @@ type RepositoryWrapper struct {
 	Repositories Repositories `json:"values"`
 	// Current page
 	Page int `json:"page"`
-	// Pointer to next page if any
-	Next string `json:"next"`
 }
 
 // Repository contains repository description
@@ -44,30 +44,43 @@ func NewCommand() *cobra.Command {
 		Use:   "backup",
 		Short: "Backup command",
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("This is a backup command")
-			// flag := cmd.Flag("username")
-			// fmt.Printf("%#+v", cmd)
-
 			var repositories RepositoryWrapper
-			url := fmt.Sprintf(BitbucketRepositoriesAPI, cmd.Flag("username").DefValue)
-
+			username := cmd.Flag("username").Value.String()
+			password := cmd.Flag("password").Value.String()
 			client := http.DefaultClient
-			request, err := http.NewRequest("GET", url, nil)
-			if err != nil {
-				log.Fatalf("Failed sending GET request to Bitbucket: %s", err)
+
+			for page := 1; ; page++ {
+				fmt.Printf("Doing %v page\n", page)
+
+				fmt.Println(username, page)
+				url := fmt.Sprintf(BitbucketRepositoriesAPI, username, page)
+				fmt.Printf("Gonna send to url: %s\n", url)
+
+				request, err := http.NewRequest("GET", url, nil)
+				if err != nil {
+					log.Fatalf("Failed sending GET request to Bitbucket: %s", err)
+				}
+
+				request.Header.Add("Content-Type", "application/json")
+				request.SetBasicAuth(username, password)
+
+				response, err := client.Do(request)
+				if err != nil {
+					log.Fatalf("Failed making request: %s", err)
+					return
+				}
+				defer response.Body.Close()
+
+				err = json.NewDecoder(response.Body).Decode(&repositories)
+
+				time.Sleep(2 * time.Second)
+
+				if len(repositories.Repositories) == 0 {
+					break
+				}
 			}
 
-			request.Header.Add("Content-Type", "application/json")
-			response, err := client.Do(request)
-			if err != nil {
-				log.Fatalf("Failed making request: %s", err)
-				return
-			}
-			defer response.Body.Close()
-
-			err = json.NewDecoder(response.Body).Decode(&repositories)
-
-			fmt.Printf("%v %v", len(repositories.Repositories), repositories.PageLength)
+			fmt.Println("Finished pulling list of repositories")
 
 			// backup.Clone()
 		},
