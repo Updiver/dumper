@@ -67,6 +67,7 @@ func NewCommand() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			username := cmd.Flag("username").Value.String()
 			password := cmd.Flag("password").Value.String()
+			saveFolder := cmd.Flag("saveFolder").Value.String()
 
 			fmt.Println("Finished pulling list of repositories")
 
@@ -75,7 +76,7 @@ func NewCommand() *cobra.Command {
 				urlWithCreds := "https://bitbucket.org/" + repoName
 				// FIXME: make sure we have no identical folder names
 				// directory := strings.Split(repoName, "/")[1] // take repository name
-				backup.Clone(urlWithCreds, repoName, Creds{ username, password })
+				backup.Clone(urlWithCreds, saveFolder+"/"+repoName, Creds{username, password})
 			}
 
 			fmt.Println("=== COULDN'T CLONE THESE REPOS BECAUSE OF THEIR LARGE SIZE ===")
@@ -136,7 +137,10 @@ func repos(creds Creds) ([]string, []string) {
 	var tooLargeRepositories []string
 	client := &http.Client{}
 
-	for _, teamName := range teams(creds) {
+	fullRepoList := []string{creds.Username}
+	fullRepoList = append(fullRepoList, teams(creds)...)
+
+	for _, teamName := range fullRepoList {
 		for page := 1; ; page++ {
 			fmt.Printf("[ %s ] Doing %v page\n", teamName, page)
 
@@ -175,7 +179,7 @@ func repos(creds Creds) ([]string, []string) {
 			}
 
 			// TODO: allow to specify interval from command line
-			time.Sleep(2 * time.Second)
+			time.Sleep(1 * time.Second)
 
 			if len(repositories.Repositories) == 0 {
 				break
