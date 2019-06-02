@@ -9,8 +9,6 @@ import (
 	"net/http"
 	"time"
 
-	"strconv"
-
 	"github.com/spf13/cobra"
 )
 
@@ -37,7 +35,7 @@ type Repository struct {
 	// Repository name with username
 	FullName string `json:"full_name"`
 	// Size in bytes
-	Size string `json:"size"`
+	Size int `json:"size"`
 }
 
 // TeamWrapper describes teams linked to current bitbucket user
@@ -166,15 +164,17 @@ func repos(creds Creds) ([]string, []string) {
 
 				// checking if size is not too big
 				// becuase system won't be able to hanle 500MB+
-				size, _ := strconv.Atoi(repo.Size)
+				size := repo.Size
 				if (size / (1024 * 1024)) < 500 {
 					// FullName is a teamname or username + repo name
 					respositoryNames = append(respositoryNames, repo.FullName)
 				} else {
+					fmt.Println("== ADDING REPO TO TOO LARGE ==")
 					tooLargeRepositories = append(tooLargeRepositories, repo.FullName)
 				}
 			}
 
+			// TODO: allow to specify interval from command line
 			time.Sleep(2 * time.Second)
 
 			if len(repositories.Repositories) == 0 {
