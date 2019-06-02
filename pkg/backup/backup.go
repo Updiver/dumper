@@ -9,10 +9,14 @@ import (
 	"os/user"
 
 	git "gopkg.in/src-d/go-git.v4"
+	"gopkg.in/src-d/go-git.v4/plumbing/transport/http"
 )
 
 // Clone does something
-func Clone(url, directory string /* branches []string */) {
+func Clone(url, directory string, creds struct {
+	Username string
+	Password string
+} /* branches []string */) {
 	fmt.Printf("Cloning repo: %s to folder: %s\n", url, directory)
 	systemUser, err := user.Current()
 	if err != nil {
@@ -32,6 +36,10 @@ func Clone(url, directory string /* branches []string */) {
 		RecurseSubmodules: git.DefaultSubmoduleRecursionDepth,
 		SingleBranch:      false,
 		Progress:          os.Stderr,
+		Auth: &http.BasicAuth{
+			Username: creds.Username,
+			Password: creds.Password,
+		},
 		// ReferenceName:     plumbing.NewBranchReferenceName(branchName),
 	})
 

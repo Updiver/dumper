@@ -72,10 +72,10 @@ func NewCommand() *cobra.Command {
 
 			repos, tooLargeRepos := repos(Creds{username, password})
 			for _, repoName := range repos {
-				urlWithCreds := "https://" + username + ":" + password + "@bitbucket.org/" + repoName
+				urlWithCreds := "https://bitbucket.org/" + repoName
 				// FIXME: make sure we have no identical folder names
 				// directory := strings.Split(repoName, "/")[1] // take repository name
-				backup.Clone(urlWithCreds, repoName)
+				backup.Clone(urlWithCreds, repoName, Creds{ username, password })
 			}
 
 			fmt.Println("=== COULDN'T CLONE THESE REPOS BECAUSE OF THEIR LARGE SIZE ===")
