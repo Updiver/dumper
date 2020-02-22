@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"bitbucket-backup/pkg/backup"
+	"dumper/pkg/backup"
 	"net/http"
 	"time"
 

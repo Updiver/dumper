@@ -18,8 +18,8 @@ var saveFolder string
 func NewCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "backup",
-		Short:   "bitbucket-backup is a cli tool to dump repos from bitbucket",
-		Long:    `bitbucket-backup is a cli tool to dump repos from bitbucket`,
+		Short:   "dumper is a cli tool to dump repos from bitbucket",
+		Long:    `dumper is a cli tool to dump repos from bitbucket`,
 		Version: AppVersion,
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Printf("Flags here: %+v %+v", username, password)
