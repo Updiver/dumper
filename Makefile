@@ -1,4 +1,3 @@
-
 GOCMD=go
 GOBUILD=$(GOCMD) build
 GORUN=$(GOCMD) run
@@ -13,7 +12,7 @@ clean-binaries:
 		-rm -f $(BINARY_FOLDER)/*
 
 build-all:
-		$(MAKE) build-backup
+		$(MAKE) build-dumper
 build-%:
 		$(GOBUILD) -ldflags="-s -w" -o $(BINARY_FOLDER)/$* -v ./cmd/$*
 		chmod +x $(BINARY_FOLDER)/$*

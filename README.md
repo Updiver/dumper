@@ -1,4 +1,10 @@
-# How to use
+# About
+
+Dumper is a core library to be used by other Updiver.Backup repositories
+
+# Text below is obsolated and doesn't relate to current state of this repository
+
+## How to use
 
 Run this command to get help:
 ```
