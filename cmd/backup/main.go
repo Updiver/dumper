@@ -1,8 +1,8 @@
 package main
 
 import (
-	"bitbucket-backup/pkg/cli/backup"
-	"bitbucket-backup/pkg/cmd"
+	"dumper/pkg/cli/backup"
+	"dumper/pkg/cmd"
 )
 
 func main() {
