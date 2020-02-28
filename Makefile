@@ -20,3 +20,11 @@ build-%:
 run-%:
 		$(MAKE) build-$*
 		$(BINARY_FOLDER)/$* --help
+
+run-tests:
+	$(GOCMD) test -count=1 ./... -v
+run-tests-cover:
+	$(GOCMD) test -count=1 ./... -v -cover
+run-tests-cover-profile:
+	$(GOCMD) test -count=1 ./... -v -coverprofile cover.out
+	$(GOCMD) tool cover -html=cover.out

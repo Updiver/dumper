@@ -24,6 +24,9 @@
 #   go-tests = true
 #   unused-packages = true
 
+[[override]]
+  name = "gopkg.in/fsnotify.v1"
+  source = "gopkg.in/fsnotify/fsnotify.v1"
 
 [[constraint]]
   name = "github.com/spf13/cobra"
