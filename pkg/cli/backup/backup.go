@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"dumper/pkg/backup"
+	"dumper/variables/bitbucket"
 	"net/http"
 	"time"
 
@@ -13,10 +14,10 @@ import (
 )
 
 // BitbucketRepositoriesAPI points to api with list of repositories
-const BitbucketRepositoriesAPI = "https://api.bitbucket.org/2.0/repositories/%v?page=%v"
+// const BitbucketRepositoriesAPI = "https://api.bitbucket.org/2.0/repositories/%v?page=%v"
 
 // BitbucketTeamsAPI points to bitbucket teams api
-const BitbucketTeamsAPI = "https://api.bitbucket.org/2.0/teams?role=member&page=%v"
+// const BitbucketTeamsAPI = "https://api.bitbucket.org/2.0/teams?role=member&page=%v"
 
 // RepositoryWrapper Contains meta information about repository object
 type RepositoryWrapper struct {
@@ -95,7 +96,7 @@ func teams(creds Creds) []string {
 	var teamNames []string
 
 	for page := 1; ; page++ {
-		url := fmt.Sprintf(BitbucketTeamsAPI, page)
+		url := fmt.Sprintf(bitbucket.BitbucketTeamsAPI, page)
 		fmt.Printf("Sending request to: %s\n", url)
 
 		request, err := http.NewRequest("GET", url, nil)
@@ -144,7 +145,7 @@ func repos(creds Creds) ([]string, []string) {
 		for page := 1; ; page++ {
 			fmt.Printf("[ %s ] Doing %v page\n", teamName, page)
 
-			url := fmt.Sprintf(BitbucketRepositoriesAPI, teamName, page)
+			url := fmt.Sprintf(bitbucket.BitbucketRepositoriesAPI, teamName, page)
 			fmt.Printf("Sending request to: %s\n", url)
 
 			request, err := http.NewRequest("GET", url, nil)
