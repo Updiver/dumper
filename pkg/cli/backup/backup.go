@@ -1,14 +1,10 @@
 package backup
 
 import (
-	"encoding/json"
 	"fmt"
-	"log"
 
+	"dumper"
 	"dumper/pkg/backup"
-	"dumper/variables/bitbucket"
-	"net/http"
-	"time"
 
 	"github.com/spf13/cobra"
 )
@@ -72,7 +68,13 @@ func NewCommand() *cobra.Command {
 
 			fmt.Println("Finished pulling list of repositories")
 
-			repos, tooLargeRepos := repos(Creds{username, password})
+			dump := new(dumper.Dumper)
+			dump.SetCreds(dumper.Credentials{
+				Username: username,
+				Password: password,
+			})
+			repos, tooLargeRepos := dump.Repositories()
+			// repos, tooLargeRepos := repos(Creds{username, password})
 			for _, repoName := range repos {
 				urlWithCreds := "https://bitbucket.org/" + repoName
 				// FIXME: make sure we have no identical folder names
@@ -90,103 +92,103 @@ func NewCommand() *cobra.Command {
 }
 
 // teams pulling list of teams current user is member of
-func teams(creds Creds) []string {
-	client := &http.Client{}
-	var teams TeamWrapper
-	var teamNames []string
+// func teams(creds Creds) []string {
+// 	client := &http.Client{}
+// 	var teams TeamWrapper
+// 	var teamNames []string
 
-	for page := 1; ; page++ {
-		url := fmt.Sprintf(bitbucket.BitbucketTeamsAPI, page)
-		fmt.Printf("Sending request to: %s\n", url)
+// 	for page := 1; ; page++ {
+// 		url := fmt.Sprintf(bitbucket.BitbucketTeamsAPI, page)
+// 		fmt.Printf("Sending request to: %s\n", url)
 
-		request, err := http.NewRequest("GET", url, nil)
-		if err != nil {
-			log.Fatalf("Failed sending GET request to Bitbucket: %s\n", err)
-		}
+// 		request, err := http.NewRequest("GET", url, nil)
+// 		if err != nil {
+// 			log.Fatalf("Failed sending GET request to Bitbucket: %s\n", err)
+// 		}
 
-		request.Header.Add("Content-Type", "application/json")
-		request.SetBasicAuth(creds.Username, creds.Password)
+// 		request.Header.Add("Content-Type", "application/json")
+// 		request.SetBasicAuth(creds.Username, creds.Password)
 
-		response, err := client.Do(request)
-		if err != nil {
-			log.Fatalf("Failed making request: %s\n", err)
-			return []string{}
-		}
-		defer response.Body.Close()
+// 		response, err := client.Do(request)
+// 		if err != nil {
+// 			log.Fatalf("Failed making request: %s\n", err)
+// 			return []string{}
+// 		}
+// 		defer response.Body.Close()
 
-		err = json.NewDecoder(response.Body).Decode(&teams)
+// 		err = json.NewDecoder(response.Body).Decode(&teams)
 
-		for _, team := range teams.Teams {
-			teamNames = append(teamNames, team.TeamName)
-		}
+// 		for _, team := range teams.Teams {
+// 			teamNames = append(teamNames, team.TeamName)
+// 		}
 
-		time.Sleep(1 * time.Second)
+// 		time.Sleep(1 * time.Second)
 
-		if len(teams.Teams) == 0 {
-			break
-		}
+// 		if len(teams.Teams) == 0 {
+// 			break
+// 		}
 
-	}
+// 	}
 
-	return teamNames
-}
+// 	return teamNames
+// }
 
 // repos returns list of repositories of current bitbucket user
-func repos(creds Creds) ([]string, []string) {
-	var repositories RepositoryWrapper
-	var respositoryNames []string
-	var tooLargeRepositories []string
-	client := &http.Client{}
+// func repos(creds Creds) ([]string, []string) {
+// 	var repositories RepositoryWrapper
+// 	var respositoryNames []string
+// 	var tooLargeRepositories []string
+// 	client := &http.Client{}
 
-	fullRepoList := []string{creds.Username}
-	fullRepoList = append(fullRepoList, teams(creds)...)
+// 	fullRepoList := []string{creds.Username}
+// 	fullRepoList = append(fullRepoList, teams(creds)...)
 
-	for _, teamName := range fullRepoList {
-		for page := 1; ; page++ {
-			fmt.Printf("[ %s ] Doing %v page\n", teamName, page)
+// 	for _, teamName := range fullRepoList {
+// 		for page := 1; ; page++ {
+// 			fmt.Printf("[ %s ] Doing %v page\n", teamName, page)
 
-			url := fmt.Sprintf(bitbucket.BitbucketRepositoriesAPI, teamName, page)
-			fmt.Printf("Sending request to: %s\n", url)
+// 			url := fmt.Sprintf(bitbucket.BitbucketRepositoriesAPI, teamName, page)
+// 			fmt.Printf("Sending request to: %s\n", url)
 
-			request, err := http.NewRequest("GET", url, nil)
-			if err != nil {
-				log.Fatalf("Failed sending GET request to Bitbucket: %s\n", err)
-			}
+// 			request, err := http.NewRequest("GET", url, nil)
+// 			if err != nil {
+// 				log.Fatalf("Failed sending GET request to Bitbucket: %s\n", err)
+// 			}
 
-			request.Header.Add("Content-Type", "application/json")
-			request.SetBasicAuth(creds.Username, creds.Password)
+// 			request.Header.Add("Content-Type", "application/json")
+// 			request.SetBasicAuth(creds.Username, creds.Password)
 
-			response, err := client.Do(request)
-			if err != nil {
-				log.Fatalf("Failed making request: %s\n", err)
-				return []string{}, []string{}
-			}
-			defer response.Body.Close()
+// 			response, err := client.Do(request)
+// 			if err != nil {
+// 				log.Fatalf("Failed making request: %s\n", err)
+// 				return []string{}, []string{}
+// 			}
+// 			defer response.Body.Close()
 
-			err = json.NewDecoder(response.Body).Decode(&repositories)
+// 			err = json.NewDecoder(response.Body).Decode(&repositories)
 
-			for _, repo := range repositories.Repositories {
+// 			for _, repo := range repositories.Repositories {
 
-				// checking if size is not too big
-				// becuase system won't be able to hanle 500MB+
-				size := repo.Size
-				if (size / (1024 * 1024)) < 500 {
-					// FullName is a teamname or username + repo name
-					respositoryNames = append(respositoryNames, repo.FullName)
-				} else {
-					fmt.Println("== ADDING REPO TO TOO LARGE ==")
-					tooLargeRepositories = append(tooLargeRepositories, repo.FullName)
-				}
-			}
+// 				// checking if size is not too big
+// 				// becuase system won't be able to hanle 500MB+
+// 				size := repo.Size
+// 				if (size / (1024 * 1024)) < 500 {
+// 					// FullName is a teamname or username + repo name
+// 					respositoryNames = append(respositoryNames, repo.FullName)
+// 				} else {
+// 					fmt.Println("== ADDING REPO TO TOO LARGE ==")
+// 					tooLargeRepositories = append(tooLargeRepositories, repo.FullName)
+// 				}
+// 			}
 
-			// TODO: allow to specify interval from command line
-			time.Sleep(1 * time.Second)
+// 			// TODO: allow to specify interval from command line
+// 			time.Sleep(1 * time.Second)
 
-			if len(repositories.Repositories) == 0 {
-				break
-			}
-		}
-	}
+// 			if len(repositories.Repositories) == 0 {
+// 				break
+// 			}
+// 		}
+// 	}
 
-	return respositoryNames, tooLargeRepositories
-}
+// 	return respositoryNames, tooLargeRepositories
+// }
