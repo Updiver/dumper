@@ -32,6 +32,18 @@ type Repository struct {
 // Repositories is a list of Repository struct
 type Repositories []Repository
 
+// TeamWrapper describes teams linked to current bitbucket user
+type TeamWrapper struct {
+	// Total number of objects in the existing page
+	PageLength int `json:"pagelen"`
+	// Teams of specified user
+	Teams []struct {
+		TeamName string `json:"username"`
+	} `json:"values"`
+	// Current page
+	Page int `json:"page"`
+}
+
 // Teams returns list of teams user belongs to
 func (d *Dumper) Teams() []string {
 	var (
@@ -51,7 +63,8 @@ func (d *Dumper) Teams() []string {
 		}
 
 		request.Header.Add("Content-Type", "application/json")
-		request.SetBasicAuth(creds.Username, creds.Password)
+		// INFO: before you should initialize creds via SetCreds()
+		request.SetBasicAuth(d.credentials.Username, d.credentials.Password)
 
 		response, err := client.Do(request)
 		if err != nil {
@@ -87,9 +100,9 @@ func (d *Dumper) Repositories() ([]string, []string) {
 
 	// TODO: perhaps we need a better naming for this variable
 	// I guess teamsList or something similar
-	teamRepoList := []string{d.creds.Username}
+	teamRepoList := []string{d.credentials.Username}
 	// TODO: bring teams function here
-	teamRepoList = append(teamRepoList, Teams()...)
+	teamRepoList = append(teamRepoList, d.Teams()...)
 
 	for _, teamName := range teamRepoList {
 		for page := 1; ; page++ {
@@ -106,7 +119,7 @@ func (d *Dumper) Repositories() ([]string, []string) {
 			}
 
 			request.Header.Add("Content-Type", "application/json")
-			request.SetBasicAuth(creds.Username, creds.Password)
+			request.SetBasicAuth(d.credentials.Username, d.credentials.Password)
 
 			client := &http.Client{}
 			response, err := client.Do(request)
