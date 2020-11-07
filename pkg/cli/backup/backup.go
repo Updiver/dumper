@@ -3,8 +3,8 @@ package backup
 import (
 	"fmt"
 
-	"dumper"
-	"dumper/pkg/backup"
+	"bitbucket.org/updiver/dumper"
+	"bitbucket.org/updiver/dumper/pkg/backup"
 
 	"github.com/spf13/cobra"
 )

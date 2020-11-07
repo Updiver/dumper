@@ -1,12 +1,13 @@
 package dumper
 
 import (
-	"dumper/variables/bitbucket"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"time"
+
+	"bitbucket.org/updiver/dumper/variables/bitbucket"
 )
 
 // RepositoryWrapper Contains meta information about repository object
