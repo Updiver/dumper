@@ -70,8 +70,8 @@ func NewCommand() *cobra.Command {
 
 			dump := new(dumper.Dumper)
 			dump.SetCreds(dumper.Credentials{
-				Username: username,
-				Password: password,
+				// Username: username,
+				Token: password,
 			})
 			repos, tooLargeRepos := dump.Repositories()
 			// repos, tooLargeRepos := repos(Creds{username, password})

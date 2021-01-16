@@ -64,8 +64,9 @@ func (d *Dumper) Teams() []string {
 		}
 
 		request.Header.Add("Content-Type", "application/json")
+		request.Header.Add("Authorization", "Bearer "+d.credentials.Token)
 		// INFO: before you should initialize creds via SetCreds()
-		request.SetBasicAuth(d.credentials.Username, d.credentials.Password)
+		// request.SetBasicAuth(d.credentials.Username, d.credentials.Password)
 
 		response, err := client.Do(request)
 		if err != nil {
@@ -74,8 +75,10 @@ func (d *Dumper) Teams() []string {
 		}
 		defer response.Body.Close()
 
+		fmt.Printf("teams response: %s\nStatus: %d\n", response.Body, response.StatusCode)
 		err = json.NewDecoder(response.Body).Decode(&teams)
 
+		fmt.Printf("teams result: %#+v\n", teams)
 		for _, team := range teams.Teams {
 			teamNames = append(teamNames, team.TeamName)
 		}
@@ -101,9 +104,9 @@ func (d *Dumper) Repositories() ([]string, []string) {
 
 	// TODO: perhaps we need a better naming for this variable
 	// I guess teamsList or something similar
-	teamRepoList := []string{d.credentials.Username}
+	// teamRepoList := []string{d.credentials.Username}
 	// TODO: bring teams function here
-	teamRepoList = append(teamRepoList, d.Teams()...)
+	teamRepoList := d.Teams()
 
 	for _, teamName := range teamRepoList {
 		for page := 1; ; page++ {
@@ -120,7 +123,8 @@ func (d *Dumper) Repositories() ([]string, []string) {
 			}
 
 			request.Header.Add("Content-Type", "application/json")
-			request.SetBasicAuth(d.credentials.Username, d.credentials.Password)
+			request.Header.Add("Authorization", "Bearer "+d.credentials.Token)
+			// request.SetBasicAuth(d.credentials.Username, d.credentials.Password)
 
 			client := &http.Client{}
 			response, err := client.Do(request)
