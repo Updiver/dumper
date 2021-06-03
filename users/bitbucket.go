@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"bitbucket.org/updiver/dumper/variables/bitbucket"
+	"github.com/updiver/dumper/variables/bitbucket"
 )
 
 // BitbucketProfile is a profile from bitbucket vcs provider

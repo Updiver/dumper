@@ -1,6 +1,6 @@
 package dumper
 
-import "bitbucket.org/updiver/dumper/users"
+import "github.com/updiver/dumper/users"
 
 // Profile returns user's profile from vcs provider (bitbucket, github etc)
 func (d *Dumper) Profile() (*users.UserProfile, *users.UserProfileAPIError) {

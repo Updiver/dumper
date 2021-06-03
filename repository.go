@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"bitbucket.org/updiver/dumper/variables/bitbucket"
+	"github.com/updiver/dumper/variables/bitbucket"
 )
 
 // RepositoryWrapper Contains meta information about repository object

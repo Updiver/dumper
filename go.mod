@@ -1,4 +1,4 @@
-module bitbucket.org/updiver/dumper
+module github.com/updiver/dumper
 
 go 1.15
 
@@ -17,4 +17,4 @@ require (
 )
 
 // this is only while we are developing users package
-replace bitbucket.org/updiver/dumper/users => /home/klaus/dumper/users
+replace github.com/updiver/dumper/users => /home/klaus/dumper/users
