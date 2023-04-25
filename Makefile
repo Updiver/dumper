@@ -3,6 +3,9 @@ GOBUILD=$(GOCMD) build
 GORUN=$(GOCMD) run
 BINARY_FOLDER=./build
 
+default:
+	${MAKE} run-dumper
+
 all:
 		$(MAKE) run
 
@@ -14,7 +17,7 @@ clean-binaries:
 build-all:
 		$(MAKE) build-dumper
 build-%:
-		$(GOBUILD) -ldflags="-s -w" -o $(BINARY_FOLDER)/$* -v ./cmd/$*
+		$(GOBUILD) -ldflags="-s -w" -o $(BINARY_FOLDER)/$* -v ./examples/$*
 		chmod +x $(BINARY_FOLDER)/$*
 
 run-%:

@@ -64,7 +64,10 @@ func (d *Dumper) Teams() []string {
 		}
 
 		request.Header.Add("Content-Type", "application/json")
-		request.Header.Add("Authorization", "Bearer "+d.credentials.Token)
+		// request.Header.Add("Authorization", "Bearer "+d.credentials.Token)
+		// FIXME: we need a set of authorizations here
+		// we can have app password, jwt auth, oauth2 via access_tokens - this is for bitbucket
+		request.Header.Add("Authorization", "Basic "+d.credentials.Token)
 		// INFO: before you should initialize creds via SetCreds()
 		// request.SetBasicAuth(d.credentials.Username, d.credentials.Password)
 
