@@ -1,31 +1,14 @@
 package dumper
 
-import (
-	"testing"
+import "testing"
 
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-)
+func TestNew(t *testing.T) {
+	dumper := New(
+		SetVCSHoster(VCSGithub),
+	)
 
-var _ = BeforeSuite(func() {
-	// Initialize redis connection for logging
-})
-
-var _ = BeforeEach(func() {
-	// fmt.Println("Before each")
-})
-
-var _ = AfterSuite(func() {
-	// fmt.Println("After suite ")
-})
-
-func TestCommands(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "Test Logger")
+	vcsHoster := dumper.VCSHoster()
+	if vcsHoster != VCSGithub {
+		t.Errorf("vcsHoster = %v, want %v", vcsHoster, VCSGithub)
+	}
 }
-
-var _ = Describe("Testing log instantiation", func() {
-	It("should do some tests", func() {
-		Expect(1).To(Equal(1))
-	})
-})

@@ -1,8 +1,7 @@
 package dumper
 
-// Option contains all options
-type Option struct {
+func SetVCSHoster(vcs VCSHoster) Option {
+	return func(d *Dumper) {
+		d.vcs = vcs
+	}
 }
-
-// TODO: create functions for option setting as Rob Pike wrote
-// https://commandcenter.blogspot.com/2014/01/self-referential-functions-and-design.html
