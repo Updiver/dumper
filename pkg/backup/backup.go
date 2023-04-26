@@ -15,15 +15,7 @@ func Clone(url, directory string, creds struct {
 	Password string
 } /* branches []string */) {
 	fmt.Printf("Cloning repo: %s to folder: %s\n", url, directory)
-	// systemUser, err := user.Current()
-	// if err != nil {
-	// 	log.Fatalf("Failed getting current system user: %s", err)
-	// 	return
-	// }
-
 	fullDirectoryPath := directory
-
-	fmt.Printf("Repo will be cloned here: %s\n", fullDirectoryPath)
 
 	// TODO: implement fetching branches
 	// TODO: implement letting user know which repos are > 1Gb
