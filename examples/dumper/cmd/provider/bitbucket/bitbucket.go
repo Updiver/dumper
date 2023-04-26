@@ -3,9 +3,11 @@ package bitbucket
 import (
 	"fmt"
 	"log"
+	"path"
 
 	bitbucket "github.com/ktrysmt/go-bitbucket"
 	"github.com/spf13/cobra"
+	"github.com/updiver/dumper/pkg/backup"
 )
 
 var (
@@ -19,7 +21,7 @@ var (
 			fmt.Println("dumping bitbucket repositories")
 
 			client := bitbucket.NewBasicAuth(Username, Token)
-			client.Pagelen = 100
+			client.Pagelen = 10
 			client.DisableAutoPaging = false
 
 			workspaces, err := GetWorkspaces(client)
@@ -42,7 +44,27 @@ var (
 
 				for _, repository := range workspaceRepos.Items {
 					fmt.Printf("== repository: %s\n", repository.Name)
-					// TODO: dump repository to dest folder
+					if cloneLinks, ok := repository.Links["clone"]; ok {
+						for _, link := range cloneLinks.([]interface{}) {
+							if link.(map[string]interface{})["name"] == "https" {
+								fmt.Printf("=== clone link: %s\n", link.(map[string]interface{})["href"])
+								httpsCloneLink := link.(map[string]interface{})["href"].(string)
+
+								fullDestFolder := path.Join(DestinationFolder, workspaceSlug, repository.Name)
+								fmt.Printf("=== clone repository to: %s\n", fullDestFolder)
+								backup.Clone(httpsCloneLink, fullDestFolder, struct {
+									Username string
+									Password string
+								}{
+									Username: Username,
+									Password: Token,
+								})
+							}
+						}
+					} else {
+						fmt.Printf("=== repository %s has no clone link\n", repository.Name)
+						continue
+					}
 				}
 			}
 		},
