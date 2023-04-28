@@ -3,6 +3,12 @@ GOBUILD=$(GOCMD) build
 GORUN=$(GOCMD) run
 BINARY_FOLDER=./build
 
+Version := $(shell git describe --tags --dirty)
+GitCommit := $(shell git rev-parse HEAD)
+LDFLAGS := "-s -w -X main.Version=$(Version) -X main.GitCommit=$(GitCommit)"
+
+.PHONY: all clean-all clean-binaries build-all build-% run-% run-tests run-tests-cover run-tests-cover-profile build-all-platforms
+
 default:
 	${MAKE} run-dumper
 
@@ -19,6 +25,15 @@ build-all:
 build-%:
 		$(GOBUILD) -ldflags="-s -w" -o $(BINARY_FOLDER)/$* -v ./examples/$*
 		chmod +x $(BINARY_FOLDER)/$*
+
+build-all-platforms:
+	mkdir -p build/
+	CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -a -ldflags $(LDFLAGS) -o build/dumper-darwin-m1 ./examples/dumper
+	CGO_ENABLED=0 GOOS=linux go build -a -ldflags $(LDFLAGS) -o build/dumper-amd64 ./examples/dumper
+	CGO_ENABLED=0 GOOS=darwin go build -a -ldflags $(LDFLAGS) -o build/dumper-darwin -a ./examples/dumper ./examples/dumper
+	GOARM=7 GOARCH=arm CGO_ENABLED=0 GOOS=linux go build -a -ldflags $(LDFLAGS) -o build/dumper-arm ./examples/dumper
+	GOARCH=arm64 CGO_ENABLED=0 GOOS=linux go build -a -ldflags $(LDFLAGS) -o build/dumper-arm64 ./examples/dumper
+	GOOS=windows CGO_ENABLED=0 go build -a -ldflags $(LDFLAGS) -o build/dumper.exe ./examples/dumper
 
 run-%:
 		$(MAKE) build-$*
