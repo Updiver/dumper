@@ -2,7 +2,8 @@ package provider
 
 import (
 	"context"
-	"fmt"
+	"log"
+	"os"
 	"path"
 
 	"github.com/google/go-github/v52/github"
@@ -12,6 +13,8 @@ import (
 )
 
 var (
+	logger = log.New(os.Stdout, "github | ", log.Ldate|log.Ltime|log.Lmicroseconds)
+
 	Username          string
 	Token             string
 	DestinationFolder string
@@ -19,24 +22,24 @@ var (
 		Use:   "github",
 		Short: "github clones repositories by using user creds passed in",
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("dumping github repositories")
+			logger.Println("dumping github repositories")
 
 			ghClient := GetAuthenticatedClient(Token)
 			allRepos, err := GetRepositories(ghClient)
 			if err != nil {
-				fmt.Printf("get repositories: %s\n", err)
+				logger.Printf("get repositories: %s\n", err)
 				return
 			}
 
 			for _, repo := range allRepos {
-				fmt.Printf("org [%s] | repo [%s]\n", *repo.Owner.Login, *repo.Name)
+				logger.Printf("org [%s] | repo [%s]\n", *repo.Owner.Login, *repo.Name)
 				if repo.CloneURL == nil {
-					fmt.Printf("skipping repo [%s] as it has no clone url\n", *repo.Name)
+					logger.Printf("skipping repo [%s] as it has no clone url\n", *repo.Name)
 					continue
 				}
 
 				fullDestFolder := path.Join(DestinationFolder, *repo.Owner.Login, *repo.Name)
-				fmt.Printf("=== clone repository to: %s\n", fullDestFolder)
+				logger.Printf("=== clone repository to: %s\n", fullDestFolder)
 				backup.Clone(*repo.CloneURL, fullDestFolder, struct {
 					Username string
 					Password string
@@ -66,7 +69,7 @@ func GetRepositories(ghClient *github.Client) ([]*github.Repository, error) {
 	for {
 		repos, resp, err := ghClient.Repositories.List(context.Background(), "", opts)
 		if err != nil {
-			fmt.Println(err)
+			logger.Printf("getting repositories list: %s\n", err)
 			return nil, err
 		}
 		allRepos = append(allRepos, repos...)

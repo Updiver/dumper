@@ -1,8 +1,8 @@
 package bitbucket
 
 import (
-	"fmt"
 	"log"
+	"os"
 	"path"
 
 	bitbucket "github.com/ktrysmt/go-bitbucket"
@@ -11,6 +11,8 @@ import (
 )
 
 var (
+	logger = log.New(os.Stdout, "bitbucket | ", log.Ldate|log.Ltime|log.Lmicroseconds)
+
 	Username          string
 	Token             string
 	DestinationFolder string
@@ -18,7 +20,7 @@ var (
 		Use:   "bitbucket",
 		Short: "bitbucket clones repositories by using user creds passed in",
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("dumping bitbucket repositories")
+			logger.Println("dumping bitbucket repositories")
 
 			client := bitbucket.NewBasicAuth(Username, Token)
 			client.Pagelen = 10
@@ -26,32 +28,32 @@ var (
 
 			workspaces, err := GetWorkspaces(client)
 			if err != nil {
-				log.Fatalf("get workspaces: %s\n", err)
+				logger.Fatalf("get workspaces: %s\n", err)
 			}
 
 			workspaceSlugs := GetWorkspaceSlugs(workspaces)
 			for _, workspaceSlug := range workspaceSlugs {
-				fmt.Printf("= workspace: %s\n", workspaceSlug)
+				logger.Printf("= workspace: %s\n", workspaceSlug)
 
 				workspaceRepos, err := client.Repositories.ListForAccount(&bitbucket.RepositoriesOptions{
 					Owner: workspaceSlug,
 					Role:  "member",
 				})
 				if err != nil {
-					fmt.Printf("get repositories: %s\n", err)
+					log.Printf("get repositories: %s\n", err)
 					continue
 				}
 
 				for _, repository := range workspaceRepos.Items {
-					fmt.Printf("== repository: %s\n", repository.Name)
+					logger.Printf("== repository: %s\n", repository.Name)
 					if cloneLinks, ok := repository.Links["clone"]; ok {
 						for _, link := range cloneLinks.([]interface{}) {
 							if link.(map[string]interface{})["name"] == "https" {
-								fmt.Printf("=== clone link: %s\n", link.(map[string]interface{})["href"])
+								logger.Printf("=== clone link: %s\n", link.(map[string]interface{})["href"])
 								httpsCloneLink := link.(map[string]interface{})["href"].(string)
 
 								fullDestFolder := path.Join(DestinationFolder, workspaceSlug, repository.Name)
-								fmt.Printf("=== clone repository to: %s\n", fullDestFolder)
+								logger.Printf("=== clone repository to: %s\n", fullDestFolder)
 								backup.Clone(httpsCloneLink, fullDestFolder, struct {
 									Username string
 									Password string
@@ -62,7 +64,7 @@ var (
 							}
 						}
 					} else {
-						fmt.Printf("=== repository %s has no clone link\n", repository.Name)
+						logger.Printf("=== repository %s has no clone link\n", repository.Name)
 						continue
 					}
 				}
