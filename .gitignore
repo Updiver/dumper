@@ -15,3 +15,5 @@
 *.sw[op]
 vendor/
 build/
+
+.vscode
