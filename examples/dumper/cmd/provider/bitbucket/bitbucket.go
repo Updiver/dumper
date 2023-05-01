@@ -7,7 +7,7 @@ import (
 
 	bitbucket "github.com/ktrysmt/go-bitbucket"
 	"github.com/spf13/cobra"
-	"github.com/updiver/dumper/pkg/backup"
+	"github.com/updiver/dumper"
 )
 
 var (
@@ -54,13 +54,15 @@ var (
 
 								fullDestFolder := path.Join(DestinationFolder, workspaceSlug, repository.Name)
 								logger.Printf("=== clone repository to: %s\n", fullDestFolder)
-								backup.Clone(httpsCloneLink, fullDestFolder, struct {
-									Username string
-									Password string
-								}{
-									Username: Username,
-									Password: Token,
-								})
+
+								dpr := dumper.New()
+								err = dpr.DumpRepository(httpsCloneLink, fullDestFolder, Username, Token)
+								if err != nil {
+									logger.Printf("dump repository: %s\n", err)
+									continue
+								}
+
+								logger.Println("Repo cloned OK")
 							}
 						}
 					} else {

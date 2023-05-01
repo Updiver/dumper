@@ -8,7 +8,7 @@ import (
 
 	"github.com/google/go-github/v52/github"
 	"github.com/spf13/cobra"
-	"github.com/updiver/dumper/pkg/backup"
+	"github.com/updiver/dumper"
 	"golang.org/x/oauth2"
 )
 
@@ -40,13 +40,14 @@ var (
 
 				fullDestFolder := path.Join(DestinationFolder, *repo.Owner.Login, *repo.Name)
 				logger.Printf("=== clone repository to: %s\n", fullDestFolder)
-				backup.Clone(*repo.CloneURL, fullDestFolder, struct {
-					Username string
-					Password string
-				}{
-					Username: Username,
-					Password: Token,
-				})
+				dpr := dumper.New()
+				err = dpr.DumpRepository(*repo.CloneURL, fullDestFolder, Username, Token)
+				if err != nil {
+					logger.Printf("dump repository: %s\n", err)
+					continue
+				}
+
+				logger.Println("Repo cloned OK")
 			}
 		},
 	}
