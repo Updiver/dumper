@@ -67,7 +67,7 @@ var (
 										Password: Token,
 									},
 								}
-								err = dpr.DumpRepository(dumpOptions)
+								_, err = dpr.DumpRepository(dumpOptions)
 								if err != nil {
 									logger.Printf("dump repository: %s\n", err)
 									continue

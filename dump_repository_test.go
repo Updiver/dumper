@@ -1,49 +1,204 @@
 package dumper
 
 import (
-	"fmt"
 	"io"
 	"os"
 	"path"
 	"path/filepath"
 	"testing"
 
+	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/stretchr/testify/require"
 )
 
-var testRepository = "https://github.com/Updiver/test-repository.git"
+var (
+	testRepositoryURL        = "https://github.com/Updiver/test-repository.git"
+	destinationRepositoryDir = "repository-clone-example"
+)
 
-func TestDumpRepository(t *testing.T) {
-	var (
-		destinationDir = "repository-clone-example"
-	)
+func positiveBool() *bool {
+	var posBool = true
+	return &posBool
+}
 
-	dir := os.TempDir()
-	fmt.Printf("temp dir: %s\n", dir)
-	fmt.Printf("desitnation dir: %s\n", destinationDir)
-	tempDir := path.Join(filepath.Clean(dir), destinationDir)
-	defer os.RemoveAll(tempDir)
+func negativeBool() *bool {
+	var negBool = false
+	return &negBool
+}
 
-	dumper := New()
-	dumpOpts := &DumpRepositoryOptions{
-		RepositoryURL: testRepository,
-		Destination:   tempDir,
-		Creds: struct {
-			Username string
-			Password string
-		}{
-			Username: "",
-			Password: "somerandomnonexistentpassword",
+func TestDumpRepository_PositiveNegativeCases(t *testing.T) {
+	tempDir := os.TempDir()
+	fullDestinationPath := path.Join(filepath.Clean(tempDir), destinationRepositoryDir)
+
+	tests := []struct {
+		name          string
+		opts          *DumpRepositoryOptions
+		shouldFail    bool
+		expectedError string
+	}{
+		{
+			name: "empty repository url",
+			opts: &DumpRepositoryOptions{
+				RepositoryURL:     "",
+				Destination:       fullDestinationPath,
+				OnlyDefaultBranch: positiveBool(),
+				Creds: Creds{
+					Username: "",
+					Password: "blahblah",
+				},
+			},
+			shouldFail:    true,
+			expectedError: "dump repository validate options: repository url required",
+		},
+		{
+			name: "empty destination",
+			opts: &DumpRepositoryOptions{
+				RepositoryURL:     testRepositoryURL,
+				Destination:       "",
+				OnlyDefaultBranch: positiveBool(),
+				Creds: Creds{
+					Username: "",
+					Password: "blahblah",
+				},
+			},
+			shouldFail:    true,
+			expectedError: "dump repository validate options: destination required",
+		},
+		{
+			name: "empty credentials",
+			opts: &DumpRepositoryOptions{
+				RepositoryURL:     testRepositoryURL,
+				Destination:       fullDestinationPath,
+				OnlyDefaultBranch: positiveBool(),
+			},
+			shouldFail:    true,
+			expectedError: "dump repository validate options: username or password required",
+		},
+		{
+			name: "incorrect credentials (password is missing)",
+			opts: &DumpRepositoryOptions{
+				RepositoryURL:     testRepositoryURL,
+				Destination:       fullDestinationPath,
+				OnlyDefaultBranch: positiveBool(),
+				Creds: Creds{
+					Username: "",
+				},
+			},
+			shouldFail:    true,
+			expectedError: "dump repository validate options: username or password required",
+		},
+		{
+			name: "incorrect credentials (username is missing)",
+			opts: &DumpRepositoryOptions{
+				RepositoryURL:     testRepositoryURL,
+				Destination:       fullDestinationPath,
+				OnlyDefaultBranch: positiveBool(),
+				Creds: Creds{
+					Password: "blahblah",
+				},
+			},
+			shouldFail:    false,
+			expectedError: "dump repository validate options: username or password required",
+		},
+		{
+			name: "target branch in restrictions without SingleBranch flag set",
+			opts: &DumpRepositoryOptions{
+				RepositoryURL:     testRepositoryURL,
+				Destination:       fullDestinationPath,
+				OnlyDefaultBranch: negativeBool(),
+				Creds: Creds{
+					Password: "blahblah",
+				},
+				BranchRestrictions: &BranchRestrictions{
+					SingleBranch: false,
+					BranchName:   "feat/test-regular-file-second-change",
+				},
+			},
+			shouldFail:    true,
+			expectedError: "dump repository validate options: branch restrictions validate: single branch must be set",
+		},
+		{
+			name: "target branch in restrictions with BranchName empty",
+			opts: &DumpRepositoryOptions{
+				RepositoryURL:     testRepositoryURL,
+				Destination:       fullDestinationPath,
+				OnlyDefaultBranch: negativeBool(),
+				Creds: Creds{
+					Password: "blahblah",
+				},
+				BranchRestrictions: &BranchRestrictions{
+					SingleBranch: true,
+				},
+			},
+			shouldFail:    true,
+			expectedError: "dump repository validate options: branch restrictions validate: branch name required",
+		},
+		{
+			name: "neither target branch nor SingleBranch flag in restrictions",
+			opts: &DumpRepositoryOptions{
+				RepositoryURL: testRepositoryURL,
+				Destination:   fullDestinationPath,
+				Creds: Creds{
+					Password: "blahblah",
+				},
+			},
+			shouldFail:    true,
+			expectedError: "dump repository validate options: either OnlyDefaultBranch or BranchRestrictions required",
 		},
 	}
-	err := dumper.DumpRepository(dumpOpts)
-	require.NoError(t, err, "dump repository")
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			dumper := &Dumper{}
+			repository, err := dumper.DumpRepository(tc.opts)
+			defer os.RemoveAll(fullDestinationPath)
 
-	fileContent, err := os.Open(path.Join(tempDir, "test-regular-file.txt"))
+			if tc.shouldFail {
+				require.Error(t, err, "should fail with error")
+				require.Equal(t, tc.expectedError, err.Error(), "error message should match")
+				require.Nil(t, repository, "repository should be nil")
+				return
+			}
+
+			require.NoError(t, err, "dump repository")
+			require.NotNil(t, repository, "repository should not be nil")
+		})
+	}
+}
+
+func TestDumpRepository_DefaultBranch(t *testing.T) {
+	tempDir := os.TempDir()
+	fullDestinationPath := path.Join(filepath.Clean(tempDir), destinationRepositoryDir)
+
+	dumper := New()
+	opts := &DumpRepositoryOptions{
+		RepositoryURL:     testRepositoryURL,
+		Destination:       fullDestinationPath,
+		OnlyDefaultBranch: positiveBool(),
+		Creds: Creds{
+			Password: "blahblah",
+		},
+	}
+	repository, err := dumper.DumpRepository(opts)
+	defer os.RemoveAll(fullDestinationPath)
+	require.NoError(t, err, "dump repository")
+	require.NotNil(t, repository, "repository should not be nil")
+
+	fileContent, err := os.Open(path.Join(fullDestinationPath, "test-regular-file.txt"))
 	require.NoError(t, err, "open file")
 
 	txt, err := io.ReadAll(fileContent)
 	require.NoError(t, err, "read file content")
 
 	require.Equal(t, "Test regular file content", string(txt), "expect to have proper file content")
+
+	refIter, err := repository.Branches()
+	require.NoError(t, err, "get branches iterator")
+
+	branches := make([]string, 0)
+	refIter.ForEach(func(ref *plumbing.Reference) error {
+		branches = append(branches, ref.Name().Short())
+		return nil
+	})
+	require.Len(t, branches, 1, "expect to have only one branch")
+	require.Equal(t, "main", branches[0], "expect to have proper branch name")
 }
