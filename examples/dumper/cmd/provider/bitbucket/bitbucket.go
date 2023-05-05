@@ -56,7 +56,18 @@ var (
 								logger.Printf("=== clone repository to: %s\n", fullDestFolder)
 
 								dpr := dumper.New()
-								err = dpr.DumpRepository(httpsCloneLink, fullDestFolder, Username, Token)
+								dumpOptions := &dumper.DumpRepositoryOptions{
+									RepositoryURL: httpsCloneLink,
+									Destination:   fullDestFolder,
+									Creds: struct {
+										Username string
+										Password string
+									}{
+										Username: Username,
+										Password: Token,
+									},
+								}
+								err = dpr.DumpRepository(dumpOptions)
 								if err != nil {
 									logger.Printf("dump repository: %s\n", err)
 									continue

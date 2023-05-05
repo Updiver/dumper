@@ -41,7 +41,18 @@ var (
 				fullDestFolder := path.Join(DestinationFolder, *repo.Owner.Login, *repo.Name)
 				logger.Printf("=== clone repository to: %s\n", fullDestFolder)
 				dpr := dumper.New()
-				err = dpr.DumpRepository(*repo.CloneURL, fullDestFolder, Username, Token)
+				dumpOptions := &dumper.DumpRepositoryOptions{
+					RepositoryURL: *repo.CloneURL,
+					Destination:   fullDestFolder,
+					Creds: struct {
+						Username string
+						Password string
+					}{
+						Username: Username,
+						Password: Token,
+					},
+				}
+				err = dpr.DumpRepository(dumpOptions)
 				if err != nil {
 					logger.Printf("dump repository: %s\n", err)
 					continue
