@@ -66,12 +66,12 @@ type BranchRestrictions struct {
 }
 
 func (br *BranchRestrictions) Validate() error {
-	if !br.SingleBranch {
-		return errors.New("single branch must be set")
-	}
-
 	if br.SingleBranch && br.BranchName == "" {
 		return errors.New("branch name required")
+	}
+
+	if !br.SingleBranch && br.BranchName != "" {
+		return errors.New("branch name is not required when single branch is not set")
 	}
 
 	return nil
@@ -132,7 +132,7 @@ func (d *Dumper) DumpRepository(opts *DumpRepositoryOptions) (*git.Repository, e
 		return repository, nil
 	}
 
-	// all branches clone
+	// all branches clone (mirror clone, bare repository)
 	if opts.BranchRestrictions != nil && !opts.BranchRestrictions.SingleBranch {
 		gitCloneOpts.Mirror = true
 

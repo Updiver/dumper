@@ -115,7 +115,7 @@ func TestDumpRepository_PositiveNegativeCases(t *testing.T) {
 				},
 			},
 			shouldFail:    true,
-			expectedError: "dump repository validate options: branch restrictions validate: single branch must be set",
+			expectedError: "dump repository validate options: branch restrictions validate: branch name is not required when single branch is not set",
 		},
 		{
 			name: "target branch in restrictions with BranchName empty",
@@ -144,6 +144,21 @@ func TestDumpRepository_PositiveNegativeCases(t *testing.T) {
 			},
 			shouldFail:    true,
 			expectedError: "dump repository validate options: either OnlyDefaultBranch or BranchRestrictions required",
+		},
+		{
+			name: "branch restrictions to clone all branches",
+			opts: &DumpRepositoryOptions{
+				RepositoryURL:     testRepositoryURL,
+				Destination:       fullDestinationPath,
+				OnlyDefaultBranch: negativeBool(),
+				Creds: Creds{
+					Password: "blahblah",
+				},
+				BranchRestrictions: &BranchRestrictions{
+					SingleBranch: false,
+				},
+			},
+			shouldFail: false,
 		},
 	}
 	for _, tc := range tests {
@@ -243,4 +258,43 @@ func TestDumpRepository_NonDefaultBranch(t *testing.T) {
 	})
 	require.Len(t, branches, 1, "expect to have only one branch")
 	require.Equal(t, "feat/test-regular-file-first-change", branches[0], "expect to have proper branch name")
+}
+
+func TestDumpRepository_DumpAllBranches(t *testing.T) {
+	tempDir := os.TempDir()
+	fullDestinationPath := path.Join(filepath.Clean(tempDir), destinationRepositoryDir)
+
+	dumper := New()
+	opts := &DumpRepositoryOptions{
+		RepositoryURL: testRepositoryURL,
+		Destination:   fullDestinationPath,
+		Creds: Creds{
+			Password: "blahblah",
+		},
+		BranchRestrictions: &BranchRestrictions{
+			SingleBranch: false,
+		},
+	}
+	repository, err := dumper.DumpRepository(opts)
+	defer os.RemoveAll(fullDestinationPath)
+	require.NoError(t, err, "dump repository")
+	require.NotNil(t, repository, "repository should not be nil")
+
+	// as this is a bare repository, we have different file structure
+	refIter, err := repository.Branches()
+	require.NoError(t, err, "get branches iterator")
+
+	branches := make([]string, 0)
+	refIter.ForEach(func(ref *plumbing.Reference) error {
+		branches = append(branches, ref.Name().Short())
+		return nil
+	})
+	require.Len(t, branches, 3, "expect to have three branches")
+
+	expectedBranches := []string{
+		"feat/test-regular-file-first-change",
+		"feat/test-regular-file-second-change",
+		"main",
+	}
+	require.ElementsMatch(t, expectedBranches, branches, "expect to have proper branch names")
 }
