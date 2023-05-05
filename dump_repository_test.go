@@ -202,3 +202,45 @@ func TestDumpRepository_DefaultBranch(t *testing.T) {
 	require.Len(t, branches, 1, "expect to have only one branch")
 	require.Equal(t, "main", branches[0], "expect to have proper branch name")
 }
+
+func TestDumpRepository_NonDefaultBranch(t *testing.T) {
+	tempDir := os.TempDir()
+	fullDestinationPath := path.Join(filepath.Clean(tempDir), destinationRepositoryDir)
+
+	dumper := New()
+	opts := &DumpRepositoryOptions{
+		RepositoryURL: testRepositoryURL,
+		Destination:   fullDestinationPath,
+		Creds: Creds{
+			Password: "blahblah",
+		},
+		BranchRestrictions: &BranchRestrictions{
+			SingleBranch: true,
+			BranchName:   "feat/test-regular-file-first-change",
+		},
+	}
+	repository, err := dumper.DumpRepository(opts)
+	defer os.RemoveAll(fullDestinationPath)
+	require.NoError(t, err, "dump repository")
+	require.NotNil(t, repository, "repository should not be nil")
+
+	fileContent, err := os.Open(path.Join(fullDestinationPath, "test-regular-file.txt"))
+	require.NoError(t, err, "open file")
+
+	txt, err := io.ReadAll(fileContent)
+	require.NoError(t, err, "read file content")
+
+	expectedFileContext := "Test regular file content\nThis is first change to this file\n"
+	require.Equal(t, expectedFileContext, string(txt), "expect to have proper file content")
+
+	refIter, err := repository.Branches()
+	require.NoError(t, err, "get branches iterator")
+
+	branches := make([]string, 0)
+	refIter.ForEach(func(ref *plumbing.Reference) error {
+		branches = append(branches, ref.Name().Short())
+		return nil
+	})
+	require.Len(t, branches, 1, "expect to have only one branch")
+	require.Equal(t, "feat/test-regular-file-first-change", branches[0], "expect to have proper branch name")
+}
