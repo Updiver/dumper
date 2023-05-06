@@ -100,54 +100,34 @@ func (d *Dumper) DumpRepository(opts *DumpRepositoryOptions) (*git.Repository, e
 		},
 	}
 
-	// default repostiory cloning
-	if opts.OnlyDefaultBranch != nil && *opts.OnlyDefaultBranch {
-		repository, err := git.PlainClone(
-			filepath.Clean(opts.Destination),
-			false,
-			gitCloneOpts,
-		)
-		if err != nil {
-			return nil, fmt.Errorf("pull repository [%s]: %w", opts.RepositoryURL, err)
-		}
-
-		return repository, nil
-	}
-
+	switch {
+	// default repository cloning with default branch
+	case opts.OnlyDefaultBranch != nil && *opts.OnlyDefaultBranch:
+		return d.plainClone(opts.Destination, gitCloneOpts)
 	// single branch cloning (target branch clone)
-	if opts.BranchRestrictions != nil && opts.BranchRestrictions.SingleBranch {
+	case opts.BranchRestrictions != nil && opts.BranchRestrictions.SingleBranch:
 		gitCloneOpts.SingleBranch = opts.BranchRestrictions.SingleBranch
 		gitCloneOpts.ReferenceName = plumbing.NewBranchReferenceName(opts.BranchRestrictions.BranchName)
-
-		// TODO: duplicate code, move to separate func
-		repository, err := git.PlainClone(
-			filepath.Clean(opts.Destination),
-			false,
-			gitCloneOpts,
-		)
-		if err != nil {
-			return nil, fmt.Errorf("pull repository [%s]: %w", opts.RepositoryURL, err)
-		}
-
-		return repository, nil
-	}
-
+		return d.plainClone(opts.Destination, gitCloneOpts)
 	// all branches clone (mirror clone, bare repository)
-	if opts.BranchRestrictions != nil && !opts.BranchRestrictions.SingleBranch {
+	case opts.BranchRestrictions != nil && !opts.BranchRestrictions.SingleBranch:
 		gitCloneOpts.Mirror = true
+		return d.plainClone(opts.Destination, gitCloneOpts)
+	default:
+		return nil, errors.New("dump repository: unknown error")
+	}
+}
 
-		// TODO: duplicate code, move to separate func
-		repository, err := git.PlainClone(
-			filepath.Clean(opts.Destination),
-			false,
-			gitCloneOpts,
-		)
-		if err != nil {
-			return nil, fmt.Errorf("pull repository [%s]: %w", opts.RepositoryURL, err)
-		}
-
-		return repository, nil
+// plainClone is a helper to clone repository
+func (d *Dumper) plainClone(destination string, gitCloneOpts *git.CloneOptions) (*git.Repository, error) {
+	repository, err := git.PlainClone(
+		filepath.Clean(destination),
+		false,
+		gitCloneOpts,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("plain clone repository [%s]: %w", gitCloneOpts.URL, err)
 	}
 
-	return nil, nil
+	return repository, nil
 }
