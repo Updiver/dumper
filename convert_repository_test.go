@@ -1,7 +1,7 @@
 package dumper
 
 import (
-	"fmt"
+	"io"
 	"os"
 	"path"
 	"path/filepath"
@@ -15,7 +15,6 @@ import (
 func TestConver_FromBareToNonBare(t *testing.T) {
 	tempDir := os.TempDir()
 	fullDestinationPath := path.Join(filepath.Clean(tempDir), destinationRepositoryDir)
-	fmt.Println("fullDestinationPath: ", fullDestinationPath)
 
 	dumper := New()
 	opts := &DumpRepositoryOptions{
@@ -27,6 +26,9 @@ func TestConver_FromBareToNonBare(t *testing.T) {
 		},
 		BranchRestrictions: &BranchRestrictions{
 			SingleBranch: false, // mirror branch and have it as bare on local fs
+		},
+		Output: &Output{
+			GitOutput: io.Discard,
 		},
 	}
 	repository, err := dumper.DumpRepository(opts)
@@ -85,7 +87,6 @@ func TestConver_FromBareToNonBare(t *testing.T) {
 func TestConver_FromNonBareToBare(t *testing.T) {
 	tempDir := os.TempDir()
 	fullDestinationPath := path.Join(filepath.Clean(tempDir), destinationRepositoryDir)
-	fmt.Println("fullDestinationPath: ", fullDestinationPath)
 
 	dumper := New()
 	opts := &DumpRepositoryOptions{
@@ -98,6 +99,9 @@ func TestConver_FromNonBareToBare(t *testing.T) {
 		BranchRestrictions: &BranchRestrictions{
 			SingleBranch: true,
 			BranchName:   "main",
+		},
+		Output: &Output{
+			GitOutput: io.Discard,
 		},
 	}
 	repository, err := dumper.DumpRepository(opts)

@@ -1,6 +1,7 @@
 package bitbucket
 
 import (
+	"io"
 	"log"
 	"os"
 	"path"
@@ -56,6 +57,7 @@ var (
 								logger.Printf("=== clone repository to: %s\n", fullDestFolder)
 
 								dpr := dumper.New()
+								onlyDefaultBranch := true
 								dumpOptions := &dumper.DumpRepositoryOptions{
 									RepositoryURL: httpsCloneLink,
 									Destination:   fullDestFolder,
@@ -65,6 +67,10 @@ var (
 									}{
 										Username: Username,
 										Password: Token,
+									},
+									OnlyDefaultBranch: &onlyDefaultBranch,
+									Output: &dumper.Output{
+										GitOutput: io.Discard,
 									},
 								}
 								_, err = dpr.DumpRepository(dumpOptions)
