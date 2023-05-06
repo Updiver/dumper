@@ -1,5 +1,12 @@
 package dumper
 
+import (
+	"fmt"
+	"path"
+
+	"github.com/go-git/go-git/v5"
+)
+
 type Dumper struct {
 	skipLargeRepos     bool
 	largeRepoLimitSize uint64 // bytes
@@ -16,4 +23,15 @@ func New(options ...Option) *Dumper {
 	}
 
 	return d
+}
+
+// Repository returns git repository
+func Repository(destination string) (*git.Repository, error) {
+	destination = path.Clean(destination)
+	repository, err := git.PlainOpen(destination)
+	if err != nil {
+		return nil, fmt.Errorf("open repository: %w", err)
+	}
+
+	return repository, nil
 }
