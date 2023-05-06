@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"io"
 	"log"
 	"os"
 	"path"
@@ -41,6 +42,7 @@ var (
 				fullDestFolder := path.Join(DestinationFolder, *repo.Owner.Login, *repo.Name)
 				logger.Printf("=== clone repository to: %s\n", fullDestFolder)
 				dpr := dumper.New()
+				onlyDefaultBranch := true
 				dumpOptions := &dumper.DumpRepositoryOptions{
 					RepositoryURL: *repo.CloneURL,
 					Destination:   fullDestFolder,
@@ -50,6 +52,10 @@ var (
 					}{
 						Username: Username,
 						Password: Token,
+					},
+					OnlyDefaultBranch: &onlyDefaultBranch,
+					Output: &dumper.Output{
+						GitOutput: io.Discard,
 					},
 				}
 				_, err = dpr.DumpRepository(dumpOptions)

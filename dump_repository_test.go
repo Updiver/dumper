@@ -46,6 +46,9 @@ func TestDumpRepository_PositiveNegativeCases(t *testing.T) {
 					Username: "",
 					Password: "blahblah",
 				},
+				Output: &Output{
+					GitOutput: io.Discard,
+				},
 			},
 			shouldFail:    true,
 			expectedError: "dump repository validate options: repository url required",
@@ -60,6 +63,9 @@ func TestDumpRepository_PositiveNegativeCases(t *testing.T) {
 					Username: "",
 					Password: "blahblah",
 				},
+				Output: &Output{
+					GitOutput: io.Discard,
+				},
 			},
 			shouldFail:    true,
 			expectedError: "dump repository validate options: destination required",
@@ -70,6 +76,9 @@ func TestDumpRepository_PositiveNegativeCases(t *testing.T) {
 				RepositoryURL:     testRepositoryURL,
 				Destination:       fullDestinationPath,
 				OnlyDefaultBranch: positiveBool(),
+				Output: &Output{
+					GitOutput: io.Discard,
+				},
 			},
 			shouldFail:    true,
 			expectedError: "dump repository validate options: username or password required",
@@ -83,6 +92,9 @@ func TestDumpRepository_PositiveNegativeCases(t *testing.T) {
 				Creds: Creds{
 					Username: "",
 				},
+				Output: &Output{
+					GitOutput: io.Discard,
+				},
 			},
 			shouldFail:    true,
 			expectedError: "dump repository validate options: username or password required",
@@ -95,6 +107,9 @@ func TestDumpRepository_PositiveNegativeCases(t *testing.T) {
 				OnlyDefaultBranch: positiveBool(),
 				Creds: Creds{
 					Password: "blahblah",
+				},
+				Output: &Output{
+					GitOutput: io.Discard,
 				},
 			},
 			shouldFail:    false,
@@ -113,6 +128,9 @@ func TestDumpRepository_PositiveNegativeCases(t *testing.T) {
 					SingleBranch: false,
 					BranchName:   "feat/test-regular-file-second-change",
 				},
+				Output: &Output{
+					GitOutput: io.Discard,
+				},
 			},
 			shouldFail:    true,
 			expectedError: "dump repository validate options: branch restrictions validate: branch name is not required when single branch is not set",
@@ -129,6 +147,9 @@ func TestDumpRepository_PositiveNegativeCases(t *testing.T) {
 				BranchRestrictions: &BranchRestrictions{
 					SingleBranch: true,
 				},
+				Output: &Output{
+					GitOutput: io.Discard,
+				},
 			},
 			shouldFail:    true,
 			expectedError: "dump repository validate options: branch restrictions validate: branch name required",
@@ -140,6 +161,9 @@ func TestDumpRepository_PositiveNegativeCases(t *testing.T) {
 				Destination:   fullDestinationPath,
 				Creds: Creds{
 					Password: "blahblah",
+				},
+				Output: &Output{
+					GitOutput: io.Discard,
 				},
 			},
 			shouldFail:    true,
@@ -156,6 +180,9 @@ func TestDumpRepository_PositiveNegativeCases(t *testing.T) {
 				},
 				BranchRestrictions: &BranchRestrictions{
 					SingleBranch: false,
+				},
+				Output: &Output{
+					GitOutput: io.Discard,
 				},
 			},
 			shouldFail: false,
@@ -191,6 +218,9 @@ func TestDumpRepository_DefaultBranch(t *testing.T) {
 		OnlyDefaultBranch: positiveBool(),
 		Creds: Creds{
 			Password: "blahblah",
+		},
+		Output: &Output{
+			GitOutput: io.Discard,
 		},
 	}
 	repository, err := dumper.DumpRepository(opts)
@@ -233,6 +263,9 @@ func TestDumpRepository_NonDefaultBranch(t *testing.T) {
 			SingleBranch: true,
 			BranchName:   "feat/test-regular-file-first-change",
 		},
+		Output: &Output{
+			GitOutput: io.Discard,
+		},
 	}
 	repository, err := dumper.DumpRepository(opts)
 	defer os.RemoveAll(fullDestinationPath)
@@ -273,6 +306,9 @@ func TestDumpRepository_DumpAllBranches(t *testing.T) {
 		},
 		BranchRestrictions: &BranchRestrictions{
 			SingleBranch: false,
+		},
+		Output: &Output{
+			GitOutput: io.Discard,
 		},
 	}
 	repository, err := dumper.DumpRepository(opts)

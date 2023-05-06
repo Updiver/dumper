@@ -3,6 +3,7 @@ package dumper
 import (
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 
@@ -16,12 +17,19 @@ type DumpRepositoryOptions struct {
 	Destination        string
 	Creds              Creds
 	OnlyDefaultBranch  *bool
+	Output             *Output
 	BranchRestrictions *BranchRestrictions
 }
 
 type Creds struct {
 	Username string
 	Password string
+}
+
+// Output defines where all the output should be written
+type Output struct {
+	GitOutput    io.Writer
+	DumperOutput io.Writer
 }
 
 func (opts *DumpRepositoryOptions) Validate() error {
@@ -93,11 +101,15 @@ func (d *Dumper) DumpRepository(opts *DumpRepositoryOptions) (*git.Repository, e
 	gitCloneOpts := &git.CloneOptions{
 		URL:               opts.RepositoryURL,
 		RecurseSubmodules: git.DefaultSubmoduleRecursionDepth,
-		Progress:          os.Stderr,
+		Progress:          os.Stdout,
 		Auth: &http.BasicAuth{
 			Username: opts.Creds.Username, // in case of access token, username should be empty
 			Password: opts.Creds.Password,
 		},
+	}
+
+	if opts.Output != nil && opts.Output.GitOutput != nil {
+		gitCloneOpts.Progress = opts.Output.GitOutput
 	}
 
 	switch {

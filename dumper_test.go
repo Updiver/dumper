@@ -1,6 +1,7 @@
 package dumper
 
 import (
+	"io"
 	"os"
 	"path"
 	"path/filepath"
@@ -27,6 +28,9 @@ func TestRepository(t *testing.T) {
 		OnlyDefaultBranch: positiveBool(),
 		Creds: Creds{
 			Password: "blahblah",
+		},
+		Output: &Output{
+			GitOutput: io.Discard,
 		},
 	}
 	_, err := dumper.DumpRepository(opts)
