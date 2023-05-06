@@ -109,3 +109,41 @@ func TestConver_FromNonBareToBare(t *testing.T) {
 	err = Convert(fullDestinationPath, RepositoryTypeBare)
 	require.ErrorAs(t, err, &ErrNotImplemented, "expect to get not implemented error")
 }
+
+func TestMoveFolderContent(t *testing.T) {
+	// create a temporary source directory
+	sourceDir := filepath.Join(os.TempDir(), "sourceDir")
+	err := os.Mkdir(sourceDir, 0755)
+	require.NoError(t, err, "expect to properly create temporary source directory")
+	defer os.RemoveAll(sourceDir)
+
+	// create some files in the source directory
+	_, err = os.Create(filepath.Join(sourceDir, "file1.txt"))
+	require.NoError(t, err)
+	_, err = os.Create(filepath.Join(sourceDir, "file2.txt"))
+	require.NoError(t, err)
+
+	// create a temporary destination directory
+	destDir := filepath.Join(os.TempDir(), "destinationDir")
+	err = os.Mkdir(destDir, 0755)
+	require.NoError(t, err)
+	defer os.RemoveAll(destDir)
+
+	// move the files from the source directory to the destination directory
+	err = moveFolderContent(sourceDir, destDir)
+	require.NoError(t, err)
+
+	// check that the files were moved
+	_, err = os.Stat(filepath.Join(destDir, "file1.txt"))
+	require.NoError(t, err)
+	_, err = os.Stat(filepath.Join(destDir, "file2.txt"))
+	require.NoError(t, err)
+
+	// try to move the files again, which should fail
+	unknownDir := filepath.Join(os.TempDir(), "unknownDir")
+	err = moveFolderContent(unknownDir, sourceDir)
+	require.Error(t, err)
+
+	// check that the error message includes the expected text
+	require.Contains(t, err.Error(), "read dir:")
+}
