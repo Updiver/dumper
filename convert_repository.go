@@ -11,6 +11,8 @@ import (
 )
 
 var (
+	ErrNotImplemented = errors.New("not implemented yet")
+
 	ErrRepositoryIsNonBare = errors.New("repository is already non-bare")
 	ErrRepositoryIsBare    = errors.New("repository is already bare")
 )
@@ -42,13 +44,7 @@ func Convert(destination string, convertToRepoType RepositoryType) error {
 		if ok := config.Core.IsBare; ok {
 			return ErrRepositoryIsBare
 		}
-
-		err = convertToBare(destination)
-		if err != nil {
-			return fmt.Errorf("convert repository: %w", err)
-		}
-
-		return nil
+		return ErrNotImplemented
 	case RepositoryTypeNonBare:
 		if ok := config.Core.IsBare; !ok {
 			return ErrRepositoryIsNonBare
@@ -119,11 +115,6 @@ func convertToNonBare(repository *git.Repository, destination string) error {
 		return fmt.Errorf("convert repository to non bare: %w", err)
 	}
 
-	return nil
-}
-
-// INFO: TO BE DONE
-func convertToBare(destination string) error {
 	return nil
 }
 

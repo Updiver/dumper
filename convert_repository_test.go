@@ -78,3 +78,34 @@ func TestConver_FromBareToNonBare(t *testing.T) {
 	})
 	require.ElementsMatch(t, expectedBranches, actualBranches, "expect to have proper branches")
 }
+
+// TestConver_FromNonBareToBare supposed to test converting
+// from non-bare to bare repository but I see no need to have
+// this implementation yet
+func TestConver_FromNonBareToBare(t *testing.T) {
+	tempDir := os.TempDir()
+	fullDestinationPath := path.Join(filepath.Clean(tempDir), destinationRepositoryDir)
+	fmt.Println("fullDestinationPath: ", fullDestinationPath)
+
+	dumper := New()
+	opts := &DumpRepositoryOptions{
+		RepositoryURL:     testRepositoryURL,
+		Destination:       fullDestinationPath,
+		OnlyDefaultBranch: negativeBool(),
+		Creds: Creds{
+			Password: "blahblah",
+		},
+		BranchRestrictions: &BranchRestrictions{
+			SingleBranch: true,
+			BranchName:   "main",
+		},
+	}
+	repository, err := dumper.DumpRepository(opts)
+	defer os.RemoveAll(fullDestinationPath)
+	require.NoError(t, err, "expect to properly dump repository")
+	require.IsType(t, &git.Repository{}, repository, "expect to have proper repository instance")
+
+	// convert repository from non-bare to bare
+	err = Convert(fullDestinationPath, RepositoryTypeBare)
+	require.ErrorAs(t, err, &ErrNotImplemented, "expect to get not implemented error")
+}
