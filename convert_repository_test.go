@@ -20,7 +20,7 @@ func TestConver_FromBareToNonBare(t *testing.T) {
 	opts := &DumpRepositoryOptions{
 		RepositoryURL:     testRepositoryURL,
 		Destination:       fullDestinationPath,
-		OnlyDefaultBranch: negativeBool(),
+		OnlyDefaultBranch: NegativeBoolRef(),
 		Creds: Creds{
 			Password: "blahblah",
 		},
@@ -92,7 +92,7 @@ func TestConver_FromNonBareToBare(t *testing.T) {
 	opts := &DumpRepositoryOptions{
 		RepositoryURL:     testRepositoryURL,
 		Destination:       fullDestinationPath,
-		OnlyDefaultBranch: negativeBool(),
+		OnlyDefaultBranch: NegativeBoolRef(),
 		Creds: Creds{
 			Password: "blahblah",
 		},

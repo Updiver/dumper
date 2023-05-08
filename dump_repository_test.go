@@ -16,16 +16,6 @@ var (
 	destinationRepositoryDir = "repository-clone-example"
 )
 
-func positiveBool() *bool {
-	var posBool = true
-	return &posBool
-}
-
-func negativeBool() *bool {
-	var negBool = false
-	return &negBool
-}
-
 func TestDumpRepository_PositiveNegativeCases(t *testing.T) {
 	tempDir := os.TempDir()
 	fullDestinationPath := path.Join(filepath.Clean(tempDir), destinationRepositoryDir)
@@ -41,7 +31,7 @@ func TestDumpRepository_PositiveNegativeCases(t *testing.T) {
 			opts: &DumpRepositoryOptions{
 				RepositoryURL:     "",
 				Destination:       fullDestinationPath,
-				OnlyDefaultBranch: positiveBool(),
+				OnlyDefaultBranch: PositiveBoolRef(),
 				Creds: Creds{
 					Username: "",
 					Password: "blahblah",
@@ -58,7 +48,7 @@ func TestDumpRepository_PositiveNegativeCases(t *testing.T) {
 			opts: &DumpRepositoryOptions{
 				RepositoryURL:     testRepositoryURL,
 				Destination:       "",
-				OnlyDefaultBranch: positiveBool(),
+				OnlyDefaultBranch: PositiveBoolRef(),
 				Creds: Creds{
 					Username: "",
 					Password: "blahblah",
@@ -75,7 +65,7 @@ func TestDumpRepository_PositiveNegativeCases(t *testing.T) {
 			opts: &DumpRepositoryOptions{
 				RepositoryURL:     testRepositoryURL,
 				Destination:       fullDestinationPath,
-				OnlyDefaultBranch: positiveBool(),
+				OnlyDefaultBranch: PositiveBoolRef(),
 				Output: &Output{
 					GitOutput: io.Discard,
 				},
@@ -88,7 +78,7 @@ func TestDumpRepository_PositiveNegativeCases(t *testing.T) {
 			opts: &DumpRepositoryOptions{
 				RepositoryURL:     testRepositoryURL,
 				Destination:       fullDestinationPath,
-				OnlyDefaultBranch: positiveBool(),
+				OnlyDefaultBranch: PositiveBoolRef(),
 				Creds: Creds{
 					Username: "",
 				},
@@ -104,7 +94,7 @@ func TestDumpRepository_PositiveNegativeCases(t *testing.T) {
 			opts: &DumpRepositoryOptions{
 				RepositoryURL:     testRepositoryURL,
 				Destination:       fullDestinationPath,
-				OnlyDefaultBranch: positiveBool(),
+				OnlyDefaultBranch: PositiveBoolRef(),
 				Creds: Creds{
 					Password: "blahblah",
 				},
@@ -120,7 +110,7 @@ func TestDumpRepository_PositiveNegativeCases(t *testing.T) {
 			opts: &DumpRepositoryOptions{
 				RepositoryURL:     testRepositoryURL,
 				Destination:       fullDestinationPath,
-				OnlyDefaultBranch: negativeBool(),
+				OnlyDefaultBranch: NegativeBoolRef(),
 				Creds: Creds{
 					Password: "blahblah",
 				},
@@ -140,7 +130,7 @@ func TestDumpRepository_PositiveNegativeCases(t *testing.T) {
 			opts: &DumpRepositoryOptions{
 				RepositoryURL:     testRepositoryURL,
 				Destination:       fullDestinationPath,
-				OnlyDefaultBranch: negativeBool(),
+				OnlyDefaultBranch: NegativeBoolRef(),
 				Creds: Creds{
 					Password: "blahblah",
 				},
@@ -174,7 +164,7 @@ func TestDumpRepository_PositiveNegativeCases(t *testing.T) {
 			opts: &DumpRepositoryOptions{
 				RepositoryURL:     testRepositoryURL,
 				Destination:       fullDestinationPath,
-				OnlyDefaultBranch: negativeBool(),
+				OnlyDefaultBranch: NegativeBoolRef(),
 				Creds: Creds{
 					Password: "blahblah",
 				},
@@ -215,7 +205,7 @@ func TestDumpRepository_DefaultBranch(t *testing.T) {
 	opts := &DumpRepositoryOptions{
 		RepositoryURL:     testRepositoryURL,
 		Destination:       fullDestinationPath,
-		OnlyDefaultBranch: positiveBool(),
+		OnlyDefaultBranch: PositiveBoolRef(),
 		Creds: Creds{
 			Password: "blahblah",
 		},

@@ -25,7 +25,7 @@ func TestRepository(t *testing.T) {
 	opts := &DumpRepositoryOptions{
 		RepositoryURL:     testRepositoryURL,
 		Destination:       fullDestinationPath,
-		OnlyDefaultBranch: positiveBool(),
+		OnlyDefaultBranch: PositiveBoolRef(),
 		Creds: Creds{
 			Password: "blahblah",
 		},
