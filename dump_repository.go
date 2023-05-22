@@ -8,17 +8,24 @@ import (
 	"path/filepath"
 
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/transport"
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
 )
 
+const (
+	DefaultBranhcName = "master"
+)
+
 type DumpRepositoryOptions struct {
-	RepositoryURL      string
-	Destination        string
-	Creds              Creds
-	OnlyDefaultBranch  *bool
-	Output             *Output
-	BranchRestrictions *BranchRestrictions
+	RepositoryURL          string
+	Destination            string
+	Creds                  Creds
+	OnlyDefaultBranch      *bool
+	Output                 *Output
+	BranchRestrictions     *BranchRestrictions
+	RepositoryRestrictions RepositoryRestrictions
 }
 
 type Creds struct {
@@ -85,6 +92,10 @@ func (br *BranchRestrictions) Validate() error {
 	return nil
 }
 
+type RepositoryRestrictions struct {
+	IgnoreEmptyRepositories bool
+}
+
 // DumpRepository dumps single repository
 func (d *Dumper) DumpRepository(opts *DumpRepositoryOptions) (*git.Repository, error) {
 	if opts == nil {
@@ -115,30 +126,54 @@ func (d *Dumper) DumpRepository(opts *DumpRepositoryOptions) (*git.Repository, e
 	switch {
 	// default repository cloning with default branch
 	case opts.OnlyDefaultBranch != nil && *opts.OnlyDefaultBranch:
-		return d.plainClone(opts.Destination, gitCloneOpts)
+		return d.plainClone(opts, gitCloneOpts)
 	// single branch cloning (target branch clone)
 	case opts.BranchRestrictions != nil && opts.BranchRestrictions.SingleBranch:
 		gitCloneOpts.SingleBranch = opts.BranchRestrictions.SingleBranch
 		gitCloneOpts.ReferenceName = plumbing.NewBranchReferenceName(opts.BranchRestrictions.BranchName)
-		return d.plainClone(opts.Destination, gitCloneOpts)
+		return d.plainClone(opts, gitCloneOpts)
 	// all branches clone (mirror clone, bare repository)
 	case opts.BranchRestrictions != nil && !opts.BranchRestrictions.SingleBranch:
 		gitCloneOpts.Mirror = true
-		return d.plainClone(opts.Destination, gitCloneOpts)
+		return d.plainClone(opts, gitCloneOpts)
 	default:
 		return nil, errors.New("dump repository: unknown error")
 	}
 }
 
 // plainClone is a helper to clone repository
-func (d *Dumper) plainClone(destination string, gitCloneOpts *git.CloneOptions) (*git.Repository, error) {
+func (d *Dumper) plainClone(opts *DumpRepositoryOptions, gitCloneOpts *git.CloneOptions) (*git.Repository, error) {
 	repository, err := git.PlainClone(
-		filepath.Clean(destination),
+		filepath.Clean(opts.Destination),
 		false,
 		gitCloneOpts,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("plain clone repository [%s]: %w", gitCloneOpts.URL, err)
+		switch {
+		case errors.Is(err, transport.ErrEmptyRemoteRepository):
+			if opts.RepositoryRestrictions.IgnoreEmptyRepositories {
+				return nil, fmt.Errorf("plain clone repository [%s]: %w", gitCloneOpts.URL, err)
+			}
+
+			// taken from workaround from go-git discussions: https://github.com/jmalloc/grit/pull/80/files
+			r, err := git.PlainInit(opts.Destination, gitCloneOpts.Mirror)
+			if err != nil {
+				_ = os.RemoveAll(opts.Destination)
+				return nil, fmt.Errorf("plain init repository [%s]: %w", gitCloneOpts.URL, err)
+			}
+
+			if _, err := r.CreateRemote(&config.RemoteConfig{Name: git.DefaultRemoteName, URLs: []string{opts.RepositoryURL}}); err != nil {
+				_ = os.RemoveAll(opts.Destination)
+				return nil, fmt.Errorf("plain create remote [%s]: %w", gitCloneOpts.URL, err)
+			}
+
+			if err = r.CreateBranch(&config.Branch{Name: DefaultBranhcName, Remote: git.DefaultRemoteName, Merge: plumbing.Master}); err != nil {
+				_ = os.RemoveAll(opts.Destination)
+				return nil, fmt.Errorf("plain create branch [%s]: %w", gitCloneOpts.URL, err)
+			}
+		default: // all other kinds of errors
+			return nil, fmt.Errorf("plain clone repository [%s]: %w", gitCloneOpts.URL, err)
+		}
 	}
 
 	return repository, nil
