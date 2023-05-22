@@ -1,6 +1,7 @@
 package dumper
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"path"
@@ -13,6 +14,7 @@ import (
 
 var (
 	testRepositoryURL        = "https://github.com/Updiver/test-repository.git"
+	testRepositoryURLEmpty   = "https://github.com/Updiver/test-repository-empty.git"
 	destinationRepositoryDir = "repository-clone-example"
 )
 
@@ -323,4 +325,38 @@ func TestDumpRepository_DumpAllBranches(t *testing.T) {
 		"main",
 	}
 	require.ElementsMatch(t, expectedBranches, branches, "expect to have proper branch names")
+}
+
+func TestDumpRepository_EmptyRepository(t *testing.T) {
+	tempDir := os.TempDir()
+	fullDestinationPath := path.Join(filepath.Clean(tempDir), destinationRepositoryDir)
+
+	dumper := New()
+	opts := &DumpRepositoryOptions{
+		RepositoryURL:     testRepositoryURLEmpty,
+		Destination:       fullDestinationPath,
+		OnlyDefaultBranch: PositiveBoolRef(),
+		Creds: Creds{
+			Password: "blahblah",
+		},
+		Output: &Output{
+			GitOutput: io.Discard,
+		},
+	}
+	fmt.Printf("%+#v\n", opts)
+	repository, err := dumper.DumpRepository(opts)
+	defer os.RemoveAll(fullDestinationPath)
+	require.NoError(t, err, "dump repository")
+	require.NotNil(t, repository, "repository should not be nil")
+
+	_, err = os.Stat(fullDestinationPath)
+	require.NoError(t, err, "check if directory exists")
+
+	dirEntries, err := os.ReadDir(fullDestinationPath)
+	require.NoError(t, err, "read directory entries")
+	for _, file := range dirEntries {
+		fmt.Printf("%+#v\n", file)
+	}
+	// expect to have .git folder and nothing else
+	require.Equal(t, 1, len(dirEntries), "expect to have no files in the directory")
 }
